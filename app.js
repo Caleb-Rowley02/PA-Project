@@ -46,7 +46,7 @@ const authenticated_menu=[
     {label:"Enter Ice Cream Inventory",home:"Inventory",function:"navigate({fn:'record_inventory'})"},
 
     //the remaining menu items are added
-    {label:"Ice Cream Inventory Summary",home:"Inventory",function:"navigate({fn:'show_inventory_summary'})", roles:["owner","administrator"]},
+    {label:"View Progress",home:"Inventory",function:"navigate({fn:'show_student_completion'})", roles:["owner","administrator"]},
 
     {label:"Employee List",function:"navigate({fn:'employee_list'})"},
     {label:"Admin Tools",id:"menu2", roles:["manager","owner","administrator"], menu:[
@@ -73,7 +73,7 @@ function show_home(){log(4,arguments,filename,show_home)
     tag("canvas").innerHTML=` 
     <div class="center-screen">
     
-    <p><img height="${window.innerHeight * .6}" src="images/brookers-logo.png"></p>
+    <h1>Physician Assistant Program</h1>
     <div style="text-align:center"></div>
     
     
@@ -348,6 +348,62 @@ async function record_inventory(params){log(4,arguments,filename,record_inventor
     }
 }
 
+async function show_student_completion(){
+
+    hide_menu()
+
+    tag("canvas").innerHTML=` 
+    <div class="page">
+        <div id="inventory-title" style="text-align:center"><h2>PA Program Progress</h2></div>
+        <div id="inventory-message" style="width:100%"></div>
+        <div id="inventory_panel"  style="width:100%">
+        </div>
+    `
+   
+    const response=await server_request({
+        mode:"get_user_completion",
+
+    })
+
+    console.log(response)
+    tag("inventory-title").innerHTML=`<h2>PA Program Progress</h2>`
+    const header=[`
+    <table class="inventory-table">
+        <tr>
+        <th class="sticky">Category</th>
+        <th class="sticky">Description</th>
+        <th class="sticky">Observed Competency</th>
+        <th class="sticky">Time Completed</th>
+        <th class="sticky">Preceptor Name</th>
+        </tr>
+        `]
+    const html = [header]
+    for(const record of response.records){
+        html.push('<tr><td> </td><td> </td>')
+        if(typeof record.fields.ObservedCompetency == "string"){
+            html.push(`<td>${record.fields.ObservedCompetency}</td>`)
+            } else {
+                html.push('<td> </td>')
+            }
+
+        if(typeof record.fields.TimeCompleted == "string"){
+            html.push(`<td>${record.fields.TimeCompleted}</td>`)
+            } else {
+                html.push('<td> </td>')
+            }
+
+        if(typeof record.fields.PreceptorName == "string"){
+            html.push(`<td>${record.fields.PreceptorName}</td>`)
+            } else {
+                html.push('<td> </td>')
+            }
+
+
+        html.push('</tr>')
+    }
+    tag("inventory_panel").innerHTML += html.join("")
+}
+
 async function show_inventory_summary(params){log(4,arguments,filename,show_inventory_summary)
     console.log('in show_inventory_summary')
     //this function is used both the record inventory counts and to build a summary report. The "style" property of the params sent to the function determines whether the function is in "count" mode or "summary" mode. Also, if the user has access to multiple stores, they will be presented with the option to select the store they wish to work with.
@@ -360,7 +416,7 @@ async function show_inventory_summary(params){log(4,arguments,filename,show_inve
     //building the HTML shell
     tag("canvas").innerHTML=` 
         <div class="page">
-            <div id="inventory-title" style="text-align:center"><h2>Ice Cream Inventory</h2></div>
+            <div id="inventory-title" style="text-align:center"><h2>PA Program Progress</h2></div>
             <div id="inventory-message" style="width:100%"></div>
             <div id="inventory_panel"  style="width:100%">
             </div>
@@ -386,7 +442,7 @@ async function show_inventory_summary(params){log(4,arguments,filename,show_inve
 
         console.log("response", response)
         //build the HMTL heading for the report
-        tag("inventory-title").innerHTML=`<h2>Ice Cream Inventory Summary</h2>`
+        tag("inventory-title").innerHTML=`<h2>PA Program Progress</h2>`
 
 
         //Build the table to display the report. The columns of the table are: Flavor, the stores available to the user, and the total inventory. Since only the owner is given the option to view inventory counts (see the autheticated_user global variable), all stores will be shown in the report.
