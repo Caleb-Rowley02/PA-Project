@@ -360,12 +360,27 @@ async function show_student_completion(){
         </div>
     `
    
-    const response=await server_request({
+    const Completion=await server_request({
         mode:"get_user_completion",
 
     })
 
-    console.log(response)
+    const Requirements=await server_request({
+        mode:"get_requirements",
+    })
+
+    console.log(Completion)
+    console.log(Requirements)
+
+    const joined_tables = []
+    for(const Completion_record of Completion.records){
+        for(const Requirement_record of Requirements.records){
+            if(Completion_record.ReqId == Requirement_record.ReqId){
+                joined_tables.push({ReqId:Completion_record.ReqId, Category:Requirements.Category})
+            }
+        }
+    }
+
     tag("inventory-title").innerHTML=`<h2>PA Program Progress</h2>`
     const header=[`
     <table class="inventory-table">
@@ -378,8 +393,13 @@ async function show_student_completion(){
         </tr>
         `]
     const html = [header]
-    for(const record of response.records){
-        html.push('<tr><td> </td><td> </td>')
+
+    // for(const record of Requirements.records){
+        
+    // }
+
+    for(const record of Completion.records){
+        html.push('<tr><td> </td> <td> </td>')
         if(typeof record.fields.ObservedCompetency == "string"){
             html.push(`<td>${record.fields.ObservedCompetency}</td>`)
             } else {

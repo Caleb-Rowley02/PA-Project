@@ -1,5 +1,5 @@
 //This variable is used to point the client-side code to the Google App Script server that handles data requests. Every time the code in Google App Script is modified, the server must be deployed again. When that happens the code returned by the function must be updated.
-const gas_deployment_id='AKfycby4zuX03xxAG3G1mMhK-cRIdDRrAgyC1v03kF8EwojuFXBabIIlhTHz0r3mGUPUZ0iJFQ'
+const gas_deployment_id='AKfycbxuUPn2V5JV0adc-UWxEvr4PgNo7bDCHxWef4haRHiPPOG06mRBMTIxKQ1Q8ONzFW7LWQ'
 
 
 /***********************************************
