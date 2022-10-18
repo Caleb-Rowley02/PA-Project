@@ -376,7 +376,9 @@ async function show_student_completion(){
     for(const Completion_record of Completion.records){
         for(const Requirement_record of Requirements.records){
             if(Completion_record.ReqId == Requirement_record.ReqId){
-                joined_tables.push({ReqId:Completion_record.ReqId, Category:Requirements.Category})
+                joined_tables.push({ReqId:Completion_record.fields.ReqId, Category:Requirement_record.fields.ReqCategory, Description:Requirement_record.fields.ReqWriting,
+                     ObservedCompetency:Completion_record.fields.ObservedCompetency, TimeCompleted:Completion_record.fields.TimeCompleted,
+                     PreceptorName:Completion_record.fields.PreceptorName})
             }
         }
     }
@@ -398,22 +400,32 @@ async function show_student_completion(){
         
     // }
 
-    for(const record of Completion.records){
-        html.push('<tr><td> </td> <td> </td>')
-        if(typeof record.fields.ObservedCompetency == "string"){
-            html.push(`<td>${record.fields.ObservedCompetency}</td>`)
+    for(const record of joined_tables){
+        html.push('<tr>')
+        if(typeof record.Category == "string"){
+            html.push(`<td>${record.Category}</td>`)
+            } else {
+                html.push('<td> </td>')
+            }
+        if(typeof record.Description == "string"){
+            html.push(`<td>${record.Description}</td>`)
+            } else {
+                html.push('<td> </td>')
+            }
+        if(typeof record.ObservedCompetency == "string"){
+            html.push(`<td>${record.ObservedCompetency}</td>`)
             } else {
                 html.push('<td> </td>')
             }
 
-        if(typeof record.fields.TimeCompleted == "string"){
-            html.push(`<td>${record.fields.TimeCompleted}</td>`)
+        if(typeof record.TimeCompleted == "string"){
+            html.push(`<td>${record.TimeCompleted}</td>`)
             } else {
                 html.push('<td> </td>')
             }
 
-        if(typeof record.fields.PreceptorName == "string"){
-            html.push(`<td>${record.fields.PreceptorName}</td>`)
+        if(typeof record.PreceptorName == "string"){
+            html.push(`<td>${record.PreceptorName}</td>`)
             } else {
                 html.push('<td> </td>')
             }
