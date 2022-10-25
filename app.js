@@ -372,46 +372,35 @@ async function show_student_completion(){
     console.log(Completion)
     console.log(Requirements)
 
-    const joined_tables = []
+    let joined_tables = []
     for(const Completion_record of Completion.records){
         for(const Requirement_record of Requirements.records){
-            if(Completion_record.ReqId == Requirement_record.ReqId){
+            if(Completion_record.fields.UserReqID == Requirement_record.fields.ReqID){
                 joined_tables.push({ReqId:Completion_record.fields.ReqId, Category:Requirement_record.fields.ReqCategory, Description:Requirement_record.fields.ReqWriting,
                      ObservedCompetency:Completion_record.fields.ObservedCompetency, TimeCompleted:Completion_record.fields.TimeCompleted,
                      PreceptorName:Completion_record.fields.PreceptorName})
+                break
             }
         }
     }
 
-    tag("inventory-title").innerHTML=`<h2>PA Program Progress</h2>`
-    const header=[`
-    <table class="inventory-table">
-        <tr>
-        <th class="sticky">Category</th>
-        <th class="sticky">Description</th>
-        <th class="sticky">Observed Competency</th>
-        <th class="sticky">Time Completed</th>
-        <th class="sticky">Preceptor Name</th>
-        </tr>
-        `]
-    const html = [header]
-
-    // for(const record of Requirements.records){
-        
-    // }
+    let categories = {}
 
     for(const record of joined_tables){
-        html.push('<tr>')
-        if(typeof record.Category == "string"){
-            html.push(`<td>${record.Category}</td>`)
-            } else {
-                html.push('<td> </td>')
-            }
-        if(typeof record.Description == "string"){
-            html.push(`<td>${record.Description}</td>`)
-            } else {
-                html.push('<td> </td>')
-            }
+        if(!(record.Category in categories)){
+            categories[record.Category] = [`
+            <h1>${record.Category}</h1>
+            <table class="inventory-table">
+            <tr>
+            <th class="sticky">Description</th>
+            <th class="sticky">Observed Competency</th>
+            <th class="sticky">Time Completed</th>
+            <th class="sticky">Preceptor Name</th>
+            </tr>
+            `]
+        }
+        let html = []
+        html.push(`<td >${record.Description}</td>`)
         if(typeof record.ObservedCompetency == "string"){
             html.push(`<td>${record.ObservedCompetency}</td>`)
             } else {
@@ -429,11 +418,14 @@ async function show_student_completion(){
             } else {
                 html.push('<td> </td>')
             }
-
-
         html.push('</tr>')
+        categories[record.Category].push(html)
+
     }
-    tag("inventory_panel").innerHTML += html.join("")
+
+    Object.values(categories).forEach((item) =>
+    tag("inventory_panel").innerHTML += item.join('')
+    )
 }
 
 async function show_inventory_summary(params){log(4,arguments,filename,show_inventory_summary)
