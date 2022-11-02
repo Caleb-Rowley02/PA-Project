@@ -47,12 +47,12 @@ const authenticated_menu=[
 
     //the remaining menu items are added
     {label:"View Progress",home:"Inventory",function:"navigate({fn:'show_student_completion'})", roles:["owner","administrator"]},
+    {label:"Mark Off",function:"navigate({fn:'markoff_req'})"},
 
     {label:"Employee List",function:"navigate({fn:'employee_list'})"},
     {label:"Admin Tools",id:"menu2", roles:["manager","owner","administrator"], menu:[
         {label:"Update User",function:"update_user()",panel:"update_user"},
     ]},
-
 ]
 
 filename="app.js"// used to control logging
@@ -61,7 +61,7 @@ function show_home(){log(4,arguments,filename,show_home)
     
     //builds the menu for the home screen
     const menu=[]
-    //current_menu is a global variable that is built based on the set of menu items defined for users and their roles. 
+    //current_menu is a lobal variable that is built based on the set of menu items defined for users and their roles. 
     for(item of current_menu){
         if(item.home){
             menu.push(`<a onClick="${item.function}">${item.home}</a>`)
@@ -100,6 +100,31 @@ async function record_task(button){
     // To be built during workshop
 }
 
+async function markoff_req(store){
+    // To be built during workshop
+    tag("canvas").innerHTML=`
+    <div class="page">
+        <h2>Mark Off Requirements</h2>
+        <div id="mark_off">
+        <i class="fas fa-spinner fa-pulse"></i>
+        </div>
+    </div>
+    `
+    //request the requirment lis from airtable through google apps script
+    const Requirements=await server_request({
+        mode:"get_requirements",
+        
+    })
+
+    if(response.status==="success"){
+        tag("mark_off").innerHTML= "Requirements retrieved"
+    }else{
+        tag("mark_off").innerHTML = "There was an error"
+    }
+           
+      
+      
+}
 
 async function show_locations(){log(4,arguments,filename,show_locations)
     // message({
