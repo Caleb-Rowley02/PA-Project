@@ -74,7 +74,6 @@ function show_home(){log(4,arguments,filename,show_home)
     <div class="center-screen">
     
     <h1>Physician Assistant Program</h1>
-    <div style="text-align:center"></div>
     
     
     </div>
