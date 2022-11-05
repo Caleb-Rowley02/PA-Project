@@ -47,12 +47,12 @@ const authenticated_menu=[
 
     //the remaining menu items are added
     {label:"View Progress",home:"Inventory",function:"navigate({fn:'show_student_completion'})", roles:["owner","administrator"]},
+    {label:"Mark Off",function:"navigate({fn:'markoff_req'})"},
 
     {label:"Employee List",function:"navigate({fn:'employee_list'})"},
     {label:"Admin Tools",id:"menu2", roles:["manager","owner","administrator"], menu:[
         {label:"Update User",function:"update_user()",panel:"update_user"},
     ]},
-
 ]
 
 filename="app.js"// used to control logging
@@ -61,7 +61,7 @@ function show_home(){log(4,arguments,filename,show_home)
     
     //builds the menu for the home screen
     const menu=[]
-    //current_menu is a global variable that is built based on the set of menu items defined for users and their roles. 
+    //current_menu is a lobal variable that is built based on the set of menu items defined for users and their roles. 
     for(item of current_menu){
         if(item.home){
             menu.push(`<a onClick="${item.function}">${item.home}</a>`)
@@ -99,6 +99,31 @@ async function record_task(button){
     // To be built during workshop
 }
 
+async function markoff_req(store){
+    // To be built during workshop
+    tag("canvas").innerHTML=`
+    <div class="page">
+        <h2>Mark Off Requirements</h2>
+        <div id="mark_off">
+        <i class="fas fa-spinner fa-pulse"></i>
+        </div>
+    </div>
+    `
+    //request the requirment lis from airtable through google apps script
+    const Requirements=await server_request({
+        mode:"get_requirements",
+        
+    })
+
+    if(response.status==="success"){
+        tag("mark_off").innerHTML= "Requirements retrieved"
+    }else{
+        tag("mark_off").innerHTML = "There was an error"
+    }
+           
+      
+      
+}
 
 async function show_locations(){log(4,arguments,filename,show_locations)
     // message({
@@ -371,46 +396,35 @@ async function show_student_completion(){
     console.log(Completion)
     console.log(Requirements)
 
-    const joined_tables = []
+    let joined_tables = []
     for(const Completion_record of Completion.records){
         for(const Requirement_record of Requirements.records){
-            if(Completion_record.ReqId == Requirement_record.ReqId){
+            if(Completion_record.fields.UserReqID == Requirement_record.fields.ReqID){
                 joined_tables.push({ReqId:Completion_record.fields.ReqId, Category:Requirement_record.fields.ReqCategory, Description:Requirement_record.fields.ReqWriting,
                      ObservedCompetency:Completion_record.fields.ObservedCompetency, TimeCompleted:Completion_record.fields.TimeCompleted,
                      PreceptorName:Completion_record.fields.PreceptorName})
+                break
             }
         }
     }
 
-    tag("inventory-title").innerHTML=`<h2>PA Program Progress</h2>`
-    const header=[`
-    <table class="inventory-table">
-        <tr>
-        <th class="sticky">Category</th>
-        <th class="sticky">Description</th>
-        <th class="sticky">Observed Competency</th>
-        <th class="sticky">Time Completed</th>
-        <th class="sticky">Preceptor Name</th>
-        </tr>
-        `]
-    const html = [header]
-
-    // for(const record of Requirements.records){
-        
-    // }
+    let categories = {}
 
     for(const record of joined_tables){
-        html.push('<tr>')
-        if(typeof record.Category == "string"){
-            html.push(`<td>${record.Category}</td>`)
-            } else {
-                html.push('<td> </td>')
-            }
-        if(typeof record.Description == "string"){
-            html.push(`<td>${record.Description}</td>`)
-            } else {
-                html.push('<td> </td>')
-            }
+        if(!(record.Category in categories)){
+            categories[record.Category] = [`
+            <h1>${record.Category}</h1>
+            <table class="inventory-table">
+            <tr>
+            <th class="sticky">Description</th>
+            <th class="sticky">Observed Competency</th>
+            <th class="sticky">Time Completed</th>
+            <th class="sticky">Preceptor Name</th>
+            </tr>
+            `]
+        }
+        let html = []
+        html.push(`<td >${record.Description}</td>`)
         if(typeof record.ObservedCompetency == "string"){
             html.push(`<td>${record.ObservedCompetency}</td>`)
             } else {
@@ -428,11 +442,14 @@ async function show_student_completion(){
             } else {
                 html.push('<td> </td>')
             }
-
-
         html.push('</tr>')
+        categories[record.Category].push(html)
+
     }
-    tag("inventory_panel").innerHTML += html.join("")
+
+    Object.values(categories).forEach((item) =>
+    tag("inventory_panel").innerHTML += item.join('')
+    )
 }
 
 async function show_inventory_summary(params){log(4,arguments,filename,show_inventory_summary)
