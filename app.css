@@ -85,8 +85,9 @@ h2{
     margin:1px;
     padding: 4px 8px 4px 8px;
     white-space: nowrap;
-    text-align: right;
-
+    text-align: left;
+    table-layout: fixed;
+    white-space: normal!important;
 }
 
 .working{
@@ -123,4 +124,10 @@ th{
     background-color: #eee;
 }
 
+td{
+    word-wrap: break-word;
+}
 
+tr:nth-child(odd){
+    background-color: #ddd;
+}

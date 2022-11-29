@@ -74,7 +74,8 @@ function show_home(){log(4,arguments,filename,show_home)
     <div class="center-screen">
     
     <h1>Physician Assistant Program</h1>
-    
+    <h1>Welcome</h1>
+    <img src="images/pa-homepage.jpg"/>
     
     </div>
     `
@@ -383,12 +384,13 @@ async function show_student_completion(){
         <div id="inventory_panel"  style="width:100%">
         </div>
     `
-   
+   //Get the UserReq table from Airtable
     const Completion=await server_request({
         mode:"get_user_completion",
 
     })
 
+    //Get the Requirements tabel from Airtable
     const Requirements=await server_request({
         mode:"get_requirements",
     })
@@ -396,20 +398,27 @@ async function show_student_completion(){
     console.log(Completion)
     console.log(Requirements)
 
+    //Combine the Completion and Requirements table into joined_tables
     let joined_tables = []
     for(const Completion_record of Completion.records){
         for(const Requirement_record of Requirements.records){
             if(Completion_record.fields.UserReqID == Requirement_record.fields.ReqID){
-                joined_tables.push({ReqId:Completion_record.fields.ReqId, Category:Requirement_record.fields.ReqCategory, Description:Requirement_record.fields.ReqWriting,
-                     ObservedCompetency:Completion_record.fields.ObservedCompetency, TimeCompleted:Completion_record.fields.TimeCompleted,
-                     PreceptorName:Completion_record.fields.PreceptorName})
+                joined_tables.push({
+                    UserReqID:Completion_record.fields.UserReqID, 
+                    Category:Requirement_record.fields.ReqCategory, 
+                    Description:Requirement_record.fields.ReqWriting,
+                    ObservedCompetency:Completion_record.fields.ObservedCompetency,
+                    TimeCompleted:Completion_record.fields.TimeCompleted,
+                    PreceptorName:Completion_record.fields.PreceptorName})
                 break
             }
         }
     }
+    //const completedate = new Date(joined_tables)
 
     let categories = {}
 
+    //Create the html table rows and sort into categories
     for(const record of joined_tables){
         if(!(record.Category in categories)){
             categories[record.Category] = [`
@@ -423,8 +432,10 @@ async function show_student_completion(){
             </tr>
             `]
         }
-        let html = []
-        html.push(`<td >${record.Description}</td>`)
+        //TO DO: Figure out a better way of doing this
+        //Each table row can be clicked on to see the details and request to have it signed off
+        let html = [`<tr onClick="show_requirement(${[record.UserReqID]})">`]
+        html.push(`<td>${record.Description}</td>`)
         if(typeof record.ObservedCompetency == "string"){
             html.push(`<td>${record.ObservedCompetency}</td>`)
             } else {
@@ -432,7 +443,8 @@ async function show_student_completion(){
             }
 
         if(typeof record.TimeCompleted == "string"){
-            html.push(`<td>${record.TimeCompleted}</td>`)
+            date = new Date(record.TimeCompleted)
+            html.push(`<td>${date.toLocaleString()}</td>`)
             } else {
                 html.push('<td> </td>')
             }
@@ -447,6 +459,7 @@ async function show_student_completion(){
 
     }
 
+    //Combine all the html and put in the invetory panel
     Object.values(categories).forEach((item) =>
     tag("inventory_panel").innerHTML += item.join('')
     )
@@ -846,3 +859,19 @@ async function employee_list(){log(4,arguments,filename,employee_list)
 
 }
 
+async function show_requirement(UserReqID){
+    //This doesn't work right now 
+    const response = await server_request({
+        mode: "get_user_req",
+        user_req_id: UserReqID
+    })
+    console.log(response)
+    html = `
+    <h1>Requirement Details</h1>
+    <h3>Category: </h3
+    <h3>Description:</h3>
+    <p> Description Here<p>
+    <button>Request Signoff</Button>
+    `
+    tag("canvas").innerHTML = html
+}
