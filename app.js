@@ -865,7 +865,7 @@ async function show_requirement(UserReqID){
         mode: "get_user_req",
         user_req_id: UserReqID
     })
-    console.log(response)
+    console.log(UserReqID)
     html = `
     <h1>Requirement Details</h1>
     <h3>Category: </h3
