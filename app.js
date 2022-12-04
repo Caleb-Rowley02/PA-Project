@@ -42,8 +42,7 @@ const authenticated_menu=[
     //This menu item allows the user to add additional users. Note the "roles" property of the object. Only users with the role of "manager", "owner", or "administrator" will see this menu item. User roles are not heirachical. All user types you wish to see a menu item must be listed in the elements of the array.
     {label:"Add Employee",function:"navigate({fn:'create_account'})", roles:["manager","owner","administrator"]}, 
 
-    //This menu item adds the menu item for updating an inventory count. Notice how a parameter is passed to the "ice_cream_inventory" function
-    {label:"Enter Ice Cream Inventory",home:"Inventory",function:"navigate({fn:'record_inventory'})"},
+
 
     //the remaining menu items are added
     {label:"View Progress",home:"Inventory",function:"navigate({fn:'show_student_completion'})", roles:["owner","administrator"]},
@@ -74,8 +73,7 @@ function show_home(){log(4,arguments,filename,show_home)
     <div class="center-screen">
     
     <h1>Physician Assistant Program</h1>
-    <h1>Welcome</h1>
-    <img src="images/pa-homepage.jpg"/>
+    
     
     </div>
     `
@@ -101,29 +99,69 @@ async function record_task(button){
 }
 
 async function markoff_req(store){
-    // To be built during workshop
-    tag("canvas").innerHTML=`
+    hide_menu()
+
+   tag("canvas").innerHTML=` 
     <div class="page">
-        <h2>Mark Off Requirements</h2>
-        <div id="mark_off">
-        <i class="fas fa-spinner fa-pulse"></i>
+        <div id="inventory-title" style="text-align:center"><h2>Mark Off Requirement</h2></div>
+        <div id="inventory-message" style="width:100%"></div>
+        <div id="inventory_panel"  style="width:100%">
         </div>
-    </div>
     `
-    //request the requirment lis from airtable through google apps script
-    const Requirements=await server_request({
-        mode:"get_requirements",
-        
+    const Completion=await server_request({
+        mode:"get_user_completion",
+
     })
 
-    if(response.status==="success"){
-        tag("mark_off").innerHTML= "Requirements retrieved"
-    }else{
-        tag("mark_off").innerHTML = "There was an error"
+    const Requirements=await server_request({
+        mode:"get_requirements",
+    })
+
+    console.log(Completion)
+    console.log(Requirements)
+
+    let joined_tables = []
+    for(const Completion_record of Completion.records){
+        for(const Requirement_record of Requirements.records){
+            if(Completion_record.fields.UserReqID == Requirement_record.fields.ReqID){
+                joined_tables.push({ReqId:Completion_record.fields.ReqId, Category:Requirement_record.fields.ReqCategory, Description:Requirement_record.fields.ReqWriting,
+                     ObservedCompetency:Completion_record.fields.ObservedCompetency, TimeCompleted:Completion_record.fields.TimeCompleted,
+                     PreceptorName:Completion_record.fields.PreceptorName})
+                break
+            }
+        }
     }
-           
-      
-      
+
+    let categories = {}
+
+    for(const record of joined_tables){
+        if(!(record.Category in categories)){
+            categories[record.Category] = [`
+            <h1>${record.Category}</h1>
+            <table class="inventory-table">
+            <tr>
+            <th class="sticky">Description</th>
+            <th class="sticky">Completed</th>
+            </tr>
+            `]
+        }
+        let html = []
+        html.push(`<td >${record.Description}</td>`)
+        if(typeof record.ObservedCompetency == "string"){
+            html.push('<td><input type="checkbox" </td>')
+            } else {
+                html.push('<td><input type="checkbox" </td>')
+            }
+
+
+        html.push('</tr>')
+        categories[record.Category].push(html)
+
+    }
+
+    Object.values(categories).forEach((item) =>
+    tag("inventory_panel").innerHTML += item.join('')
+    )
 }
 
 async function show_locations(){log(4,arguments,filename,show_locations)
@@ -188,191 +226,9 @@ async function show_locations(){log(4,arguments,filename,show_locations)
     }else{
         tag("store_list_panel").innerHTML="Unable to get store list: " + response.message + "."
     }    
-
-
-
-
-
-
-
-
     console.log(response)
     hide_menu()
 }
-
-
-async function record_inventory(params){log(4,arguments,filename,record_inventory)
-    console.log('in record_inventory')
-
-    if(!logged_in()){show_home();return}//in case followed a link after logging out. This prevents the user from using this feature when they are not authenticated.
-
-    //First we hide the menu
-    hide_menu()
-
-    //This function is set up recursively to build the page for working with inventory. The first time the function is called, the HTML shell is created for displaying either the inventory form for recording the count or the inventory report. Note that this will only be built if there is a "style" property set when the function is called. Once the shell is created, the function is called again to either built the form for recording an inventory count or create the summary report.
-    if(!params){
-        //building the HTML shell
-        tag("canvas").innerHTML=` 
-            <div class="page">
-                <div id="inventory-title" style="text-align:center"><h2>Ice Cream Inventory</h2></div>
-                <div id="inventory-message" style="width:100%"></div>
-                <div id="inventory_panel"  style="width:100%">
-                </div>
-            </div>  
-        `
-        //loading user data. Any user can record an inventory count, so we don't need to check their role at this point. If a user is associated with more than one store and they wish to record an inventory count, they will be prompted to select the store they want to work with.
-
-        const user_data = get_user_data()
-        console.log ("user_data",user_data)
-        if(user_data.store.length===1){
-            //If the user is associated with exactly 1 store, we call the get_inventory_list function again to populate the rest of the page with the data for that store. 
-            tag("inventory-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'//this element is used to add a visual element (spinning wheel) to signify that the site is processing.
-            //we call the get_inventory_list function (mode) filtered to show only "Ice Cream" (filter) - note that there are other inventory items - in the store associated with this user (store).
-            record_inventory({
-                mode:"get_inventory_data",
-                filter:"list='Ice Cream'",
-                store:user_data.store[0]
-            })
-        }else{
-            //We get here if the user is associated with more than 1 store. We build a form to have the user select the store they wish to work with.
-            const html=['<form>Store: <select name="store">']
-            for(store of user_data.store){
-                html.push(`<option value="${store}">${store_list()[store]}</option>`)
-            }
-            //When the user selects the store using the form, the "get_inventory_list" function is invoked on the submission of the form to populate the rest of this page with the data for that store
-            html.push(`</select>
-                        <button type="button" id="choose_store_button" onclick="record_inventory(form_data(this,true))">Submit</button>
-                        <input type="hidden" name="mode" value="get_inventory_data">
-                        <input type="hidden" name="filter" value="list='Ice Cream'">
-                        </form>`)
-            tag("inventory_panel").innerHTML=html.join("")
-        }
-
-    }else{    
-        //Notice that the first time through the store property is undefined and is set when the user data is loaded. Therefore this code will only process the second time through once the store property is set. During this pass, we determine whether to display the report of the last recorded inventory or display the form for recording a new inventory count.
-        console.log("at ice_cream_inventory params=store")
-        //we use a call to the "server_request" function to use Google App Script to retrieve the data needed to processs the form or the report
-        
-        const response=await server_request(params)
-        tag("inventory-message").innerHTML=''
-
-
-
-
-        if(response.status==="success"){//If the data is retrieved successfully, we proceed.
-            
-            //this is generating the form for updating inventory counts in an individual store
-            // keep track of navigation
-            window.rows={}
-            window.cols={}
-            console.log("response", response)
-            // build the HTML header for the page identifying the store for which the counts will be recorded
-            tag("inventory-title").innerHTML=`<h2>${store_list()[params.store]} Ice Cream Inventory</h2>`
-            const html=["Fill in every row in this section."]
-            //build the table for the form used to record the counts.
-            const header=[`
-            <table class="inventory-table">
-                <tr>
-                <th class="sticky" onclick="show_elements(['col-1','col-2','col-3'])">Flavor</th>
-                `]
-            let p=1 // map store ids to column numbers.  only needed for this loop then can be reused
-            
-            //add table headers for the "containers" (freezers) where inventory will be counted. Note that only the "Vineyard" location has a "Hardening Cabinet"
-            for(container of response.list.records[0].fields.container){
-                window.cols[p]=container
-                window.cols[container]=p++
-                let cont=container
-                console.log("container",container)
-                header.push(`<th onclick="hide_elements('col-${window.cols[container]}')" class="sticky col-${window.cols[container]}" >${cont}</th>`)
-            }     
-            header.push('<th class="sticky">Total</th></tr>')
-            html.push(header.join(""))
-            irregular=[]// ice cream not in regular category
-
-            p=1// for keeping track of navigating rows.  can be reused after this loop
-            for(record of response.list.records){
-                // object to allow the navigation from row to row
-                window.rows[p]=record.id
-                window.rows[record.id]=p++
-
-                //build the rest of the table for all of the regular ice cream items
-                let target=html
-                if(record.fields.category!=="Regular"){
-                    target=irregular
-                }
-                //add a row for each flavor (record.field.name)
-                target.push("<tr>")
-                target.push(`<th>${record.fields.name}</th>`)
-                //build a text input in each cell. Use the combination of the flavor and container ids as the identifier of the input so that we can use it to update the correct record. When a value in the input is change (onchange), the update_observation function is called and passed the value and information needed (store, flavor, and container) to add the observation to the database. update_observation is a function in Amazon App Script.
-                for(container of record.fields.container){
-                    target.push(`<td class="active col-${window.cols[container]}"><input id="${record.id}|${container.replace(/\s/g,"_")}" data-store="${params.store}" data-item_id="${record.id}" data-container="${container}" type="text" onchange="update_observation(this)"></td>`)
-                }     
-                target.push(`<td  class="inactive" id="${record.id}|total"></td></tr>`)//This sets the background color for items that have been updated to provide a visual cue that the element has been updated.
-            }     
-            html.push("</table>")
-            //add form to collect observations for the irregular items
-            html.push("<br>In this section, fill in only the rows corresponding to flavors you have on hand.")
-            html.push(header.join(""))
-            html.push(irregular.join(""))
-            html.push("</table>")
-            tag("inventory_panel").innerHTML=html.join("")
-
-            // add quick buttons. The dipping cabinet locations can only have values of 0, 1/4, 1/2, 3/4, and 1. This will add buttons for inputs in the dipping cabinets.
-            for(const [key,row] of Object.entries(window.rows)){
-                if(isNaN(row)){
-                    add_buttons(row,"Dipping Cabinet")
-                }
-            }
-
-            const val_map={
-                "0":0  ,
-                "1":1  ,
-                "2":2  ,
-                "3":3  ,
-                "4":4  ,
-                "¼":.25,
-                "½":.5 ,
-                "¾":.75
-            }
-
-            // To the extent that observations may already exist for a flavor in that location in that store, they will be populated on the table. Changes to these values will also be updated.
-            if(response.data.records){
-                for(record of response.data.records){
-                    const box=tag(record.fields.item[0] + "|" + record.fields.container.replace(/\s/g,"_"))
-                    box.dataset.obs_id=record.id
-                    box.value=record.fields.quantity
-                    for(const div of getAllSiblings(box)){
-                        // console.log(div.tagName,div.innerHTML,record.fields.quantity,val_map[div.innerHTML],record.fields.quantity===val_map[div.innerHTML])
-                        if(div.tagName==="DIV" && record.fields.quantity===val_map[div.innerHTML]){
-                            div.style.backgroundColor="lightGrey"
-                            div.style.color="black"
-                        }
-                    }
-                    box.parentElement.classList.add("inactive")
-                    box.parentElement.classList.remove("active")
-                }
-            }
-
-            // now that the data have been entered, total the rows. This will be updated every time a value is updated in the database.
-            for(const [key,row] of Object.entries(window.rows)){
-                if(isNaN(row)){
-                    //console.log(row)
-                    tag(row + "|total").innerHTML = flavor_total(row)
-                }
-            }
-
-            tag("inventory_panel").addEventListener("keyup", function(event) {
-                if (event.keyCode === 13) {
-                    move_down(event.target);
-                }
-            });                
-        }else{
-            //This executes if the data needed to create the form or report is not retrieved successfully. It is essentially an error message to the user.
-            tag("inventory_panel").innerHTML="Unable to get inventory list: " + response.message + "."
-        }
-    }
-}
-
 async function show_student_completion(){
 
     hide_menu()
@@ -384,13 +240,12 @@ async function show_student_completion(){
         <div id="inventory_panel"  style="width:100%">
         </div>
     `
-   //Get the UserReq table from Airtable
+   
     const Completion=await server_request({
         mode:"get_user_completion",
 
     })
 
-    //Get the Requirements tabel from Airtable
     const Requirements=await server_request({
         mode:"get_requirements",
     })
@@ -398,27 +253,20 @@ async function show_student_completion(){
     console.log(Completion)
     console.log(Requirements)
 
-    //Combine the Completion and Requirements table into joined_tables
     let joined_tables = []
     for(const Completion_record of Completion.records){
         for(const Requirement_record of Requirements.records){
             if(Completion_record.fields.UserReqID == Requirement_record.fields.ReqID){
-                joined_tables.push({
-                    UserReqID:Completion_record.fields.UserReqID, 
-                    Category:Requirement_record.fields.ReqCategory, 
-                    Description:Requirement_record.fields.ReqWriting,
-                    ObservedCompetency:Completion_record.fields.ObservedCompetency,
-                    TimeCompleted:Completion_record.fields.TimeCompleted,
-                    PreceptorName:Completion_record.fields.PreceptorName})
+                joined_tables.push({ReqId:Completion_record.fields.ReqId, Category:Requirement_record.fields.ReqCategory, Description:Requirement_record.fields.ReqWriting,
+                     ObservedCompetency:Completion_record.fields.ObservedCompetency, TimeCompleted:Completion_record.fields.TimeCompleted,
+                     PreceptorName:Completion_record.fields.PreceptorName})
                 break
             }
         }
     }
-    //const completedate = new Date(joined_tables)
 
     let categories = {}
 
-    //Create the html table rows and sort into categories
     for(const record of joined_tables){
         if(!(record.Category in categories)){
             categories[record.Category] = [`
@@ -432,10 +280,8 @@ async function show_student_completion(){
             </tr>
             `]
         }
-        //TO DO: Figure out a better way of doing this
-        //Each table row can be clicked on to see the details and request to have it signed off
-        let html = [`<tr onClick="show_requirement(${[record.UserReqID]})">`]
-        html.push(`<td>${record.Description}</td>`)
+        let html = []
+        html.push(`<td >${record.Description}</td>`)
         if(typeof record.ObservedCompetency == "string"){
             html.push(`<td>${record.ObservedCompetency}</td>`)
             } else {
@@ -443,8 +289,7 @@ async function show_student_completion(){
             }
 
         if(typeof record.TimeCompleted == "string"){
-            date = new Date(record.TimeCompleted)
-            html.push(`<td>${date.toLocaleString()}</td>`)
+            html.push(`<td>${record.TimeCompleted}</td>`)
             } else {
                 html.push('<td> </td>')
             }
@@ -459,7 +304,6 @@ async function show_student_completion(){
 
     }
 
-    //Combine all the html and put in the invetory panel
     Object.values(categories).forEach((item) =>
     tag("inventory_panel").innerHTML += item.join('')
     )
