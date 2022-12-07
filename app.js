@@ -69,14 +69,6 @@ function show_home(){log(4,arguments,filename,show_home)
 
     //the main page is rendered with the Brooker's Ice cream logo. 
 
-    tag("canvas").innerHTML=` 
-    <div class="center-screen">
-    
-    <h1>Physician Assistant Program</h1>
-    
-    
-    </div>
-    `
 
     //The navigation menu is hidden (the three parallel lines are show) when the homepage is rendered.
     hide_menu()

@@ -1,33 +1,133 @@
 html {zoom: 100%;}
+*{box-sizing: border-box;}
 
 body{
+    font-family: 'Public Sans', sans-serif;
+    font-size: 16px;
     padding:0;
     background-color: ivory;
     text-align: left;
     min-width: 200px;
 }
 
-h1 {
-    color: maroon;
+/*Header stuff*/
+.homepage {
+    width: 100%;
+    margin: 0;  
+}
+.homepage img{
+    width: 100%;
+    height: auto;
+    padding: 1rem 2vw;
+    overflow: hidden;
+}
+
+figcaption {
+    position: absolute;
+    resize: block;
+    margin: 0;
+    text-align: center;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 2rem;
+    width: 100%;
+    height: auto;
+}
+
+header h1 {
+    color: #046219;
     text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
     font-size: 2rem;
     line-height: 2rem;
     text-align: center;
 }
+header p {
+    text-align: center;
+    color: rgb(237, 228, 228);
+    letter-spacing: .5px;
+}
+
+/*Navigation stuff*/
+
+/* small screens*/
+@media only screen and (max-width: 900px) {
+    nav ul{
+        margin: 0;
+        padding: 0 2vw;
+        list-style-type: none;
+    }
+    nav a {
+        display: block;
+        padding: .8rem;
+        font-size: 1rem;
+        text-decoration: none;
+        font-weight: 700;
+        text-transform: uppercase;
+        text-align: center;
+        border-bottom: solid 1px #046219;
+        color: black;
+    }
+    nav li.active a {
+        background-color: #0b7909;
+        background-image: linear-gradient(to right, #0b7909, #046219);
+        color: white;
+    }
+} /*end of the media query*/
+
+/*BIG screens*/
+@media only screen and (min-width: 601px) {
+
+nav {
+    background-color: #046219;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0 2vw;
+    margin: 0;
+    display: flex;
+}
+
+nav a{
+    font-size: 1.1rem;
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: 700;
+    display: block;
+    padding: 0.83rem 2rem;
+}
+
+nav li.active a{
+    background-color: #0b7909;
+    color: #FAEDCD;
+}
+nav a:hover{
+    color: #fff;
+}
+}  /*end of the media query*/
+
+/*Main Stuff*/
 
 h2{
     margin-top:0;
     margin-bottom:.5rem;
     color: maroon;
 }
+
 .center-screen {
     position: absolute;
     top: 50%;
     left: 50%;
     margin-right: -50%;
     transform: translate(-50%, -50%);
-    text-align: center;
 }
+
+main {
+    padding: 1rem 2vw;
+}
+
 #welcome{
     background-color: rgba(255,255,255,0.8);
     display:inline-block;
@@ -36,8 +136,14 @@ h2{
     text-align: left;
 }
 
+main address {
+    text-align: center;
+    color:#046219;
+    padding: .5rem;
+}
+
 .page{
-    background-color: Beige;
+    background-color: white;
     display:inline-block;
     padding:1rem;
     text-align: left;
@@ -73,9 +179,8 @@ h2{
 
 }
 
-
 .inventory-table th {
-    color: maroon;
+    color: #046219;
     background-color: lightyellow;
     margin:1px;
     padding: 4px 8px 4px 8px;
@@ -85,9 +190,8 @@ h2{
     margin:1px;
     padding: 4px 8px 4px 8px;
     white-space: nowrap;
-    text-align: left;
-    table-layout: fixed;
-    white-space: normal!important;
+    text-align: right;
+
 }
 
 .working{
@@ -96,7 +200,6 @@ h2{
     background-size: 20px;
     background-repeat: no-repeat;
 }
-
 
 .inventory-table input {
     width:100%;
@@ -124,10 +227,13 @@ th{
     background-color: #eee;
 }
 
-td{
-    word-wrap: break-word;
+#header-image-menu{
+    top: 10px;
+    position: relative;
 }
 
-tr:nth-child(odd){
-    background-color: #ddd;
+#header-image-menu img{
+    width: 100%;
+    margin: none;
+    padding: none;
 }
