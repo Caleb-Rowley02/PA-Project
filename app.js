@@ -105,9 +105,13 @@ async function markoff_req(store){
     for(const Completion_record of Completion.records){
         for(const Requirement_record of Requirements.records){
             if(Completion_record.fields.UserReqID == Requirement_record.fields.ReqID){
-                joined_tables.push({ReqId:Completion_record.fields.ReqId, Category:Requirement_record.fields.ReqCategory, Description:Requirement_record.fields.ReqWriting,
-                     ObservedCompetency:Completion_record.fields.ObservedCompetency, TimeCompleted:Completion_record.fields.TimeCompleted,
-                     PreceptorName:Completion_record.fields.PreceptorName})
+                joined_tables.push({
+                    UserReqID:Completion_record.fields.UserReqID, 
+                    Category:Requirement_record.fields.ReqCategory, 
+                    Description:Requirement_record.fields.ReqWriting,
+                    ObservedCompetency:Completion_record.fields.ObservedCompetency,
+                    TimeCompleted:Completion_record.fields.TimeCompleted,
+                    PreceptorName:Completion_record.fields.PreceptorName})
                 break
             }
         }
@@ -119,7 +123,7 @@ async function markoff_req(store){
         if(!(record.Category in categories)){
             categories[record.Category] = [`
             <h1>${record.Category}</h1>
-            <table class="inventory-table">
+            <table class="completion-table">
             <tr>
             <th class="sticky">Description</th>
             <th class="sticky">Completed</th>
@@ -146,7 +150,7 @@ async function markoff_req(store){
 }
 
 async function show_student_completion(){
-
+    //A bunch of commas appear on the page when this function is run, and I'm not sure why
     hide_menu()
 
     tag("canvas").innerHTML=` 
@@ -159,12 +163,13 @@ async function show_student_completion(){
    //Get the UserReq table from Airtable
     const Completion=await server_request({
         mode:"get_user_completion",
-
+        UserID:12345678,
     })
 
     //Get the Requirements tabel from Airtable
     const Requirements=await server_request({
         mode:"get_requirements",
+        ReqID:"all"
     })
 
     console.log(Completion)
@@ -186,7 +191,6 @@ async function show_student_completion(){
             }
         }
     }
-    //const completedate = new Date(joined_tables)
 
     let categories = {}
 
@@ -195,7 +199,7 @@ async function show_student_completion(){
         if(!(record.Category in categories)){
             categories[record.Category] = [`
             <h1>${record.Category}</h1>
-            <table class="inventory-table">
+            <table class="completion-table">
             <tr>
             <th class="sticky">Description</th>
             <th class="sticky">Observed Competency</th>
@@ -392,19 +396,43 @@ async function employee_list(){log(4,arguments,filename,employee_list)
 
 }
 
-async function show_requirement(UserReqID){
+async function show_requirement(user_req_ID){
     //This doesn't work right now 
-    const response = await server_request({
+    const user_req = await server_request({
         mode: "get_user_req",
-        user_req_id: UserReqID
+        UserReqID: user_req_ID,
     })
-    console.log(UserReqID)
+    console.log(user_req)
+    const requirement = await server_request({
+        mode: "get_requirements",
+        ReqID: user_req.records[0].fields.ReqID,
+    })
+    console.log(requirement)
+    let req_status = ""
+    if(typeof user_req.records[0].fields.ObservedCompetency == "string"){
+        date = new Date(user_req.records[0].fields.TimeCompleted)
+        date = date.toLocaleString()
+        req_status = `Complete on ${date}`
+    } else{
+        req_status= "Incomplete"
+    }
     html = `
     <h1>Requirement Details</h1>
-    <h3>Category: </h3
-    <h3>Description:</h3>
-    <p> Description Here<p>
-    <button>Request Signoff</Button>
+    <h3>Category: ${requirement.records[0].fields.ReqCategory} </h3
+    <h3>Description: </h3>
+    <h3>${requirement.records[0].fields.ReqWriting}</h3>
+    <h3> ${req_status}</h3>
+    <button onclick="request_signoff(${user_req_ID})">Request Signoff</Button>
     `
     tag("canvas").innerHTML = html
+}
+
+async function request_signoff(user_req_ID){
+    console.log(user_req_ID)
+    const response = await server_request({
+        mode: "request_signoff",
+        UserReqID: user_req_ID,
+        PreceptorID: 87654321
+    })
+    console.log(response)
 }

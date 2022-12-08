@@ -174,18 +174,18 @@ main address {
     color:green;
 }
 
-.inventory-table{
+.completion-table{
     background-color: lightgrey;
 
 }
 
-.inventory-table th {
+.completion-table th {
     color: #046219;
     background-color: lightyellow;
     margin:1px;
     padding: 4px 8px 4px 8px;
 }
-.inventory-table td {
+.completion-table td {
     color: black;
     margin:1px;
     padding: 4px 8px 4px 8px;
@@ -202,7 +202,7 @@ main address {
     background-repeat: no-repeat;
 }
 
-.inventory-table input {
+.completion-table input {
     width:100%;
     border:none;
     text-align: right;
@@ -240,4 +240,10 @@ th{
 }
 tr:nth-child(odd){
     background-color: #ddd;
+}
+.completion-table tr{
+    cursor: pointer;
+}
+.completion-table tr:hover{
+    background-color: #ffffff;
 }
