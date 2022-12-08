@@ -96,6 +96,7 @@ async function markoff_req(store){
 
     const Requirements=await server_request({
         mode:"get_requirements",
+        ReqID: "all",
     })
 
     console.log(Completion)
