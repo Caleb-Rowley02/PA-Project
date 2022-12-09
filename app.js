@@ -55,7 +55,7 @@ const authenticated_menu=[
 
 filename="app.js"// used to control logging
 
-function show_home(){log(4,arguments,filename,show_home)
+function show_home(){
     
     //builds the menu for the home screen
     const menu=[]
@@ -65,10 +65,6 @@ function show_home(){log(4,arguments,filename,show_home)
             menu.push(`<a onClick="${item.function}">${item.home}</a>`)
         }
     }
-
-    //the main page is rendered with the Brooker's Ice cream logo. 
-
-
     //The navigation menu is hidden (the three parallel lines are show) when the homepage is rendered.
     hide_menu()
 }
@@ -151,15 +147,11 @@ async function markoff_req(store){
 }
 
 async function show_student_completion(){
-    //A bunch of commas appear on the page when this function is run, and I'm not sure why
     hide_menu()
-
     tag("canvas").innerHTML=` 
     <div class="page">
         <div id="inventory-title" style="text-align:center"><h2>PA Program Progress</h2></div>
-        <div id="inventory-message" style="width:100%"></div>
-        <div id="inventory_panel"  style="width:100%">
-        </div>
+        <div id="inventory_panel"  style="width:100%"></div>
     `
    //Get the UserReq table from Airtable
     const Completion=await server_request({
@@ -211,27 +203,27 @@ async function show_student_completion(){
         }
         //TO DO: Figure out a better way of doing this
         //Each table row can be clicked on to see the details and request to have it signed off
-        let html = [`<tr onClick="show_requirement(${[record.UserReqID]})">`]
-        html.push(`<td>${record.Description}</td>`)
+        let html = `<tr onClick="show_requirement(${[record.UserReqID]})">`
+        html+=`<td>${record.Description}</td>`
         if(typeof record.ObservedCompetency == "string"){
-            html.push(`<td>${record.ObservedCompetency}</td>`)
+            html+=`<td>${record.ObservedCompetency}</td>`
             } else {
-                html.push('<td> </td>')
+                html+='<td> </td>'
             }
 
         if(typeof record.TimeCompleted == "string"){
             date = new Date(record.TimeCompleted)
-            html.push(`<td>${date.toLocaleString()}</td>`)
+            html+=`<td>${date.toLocaleString()}</td>`
             } else {
-                html.push('<td> </td>')
+                html+='<td> </td>'
             }
 
         if(typeof record.PreceptorName == "string"){
-            html.push(`<td>${record.PreceptorName}</td>`)
+            html+=`<td>${record.PreceptorName}</td>`
             } else {
-                html.push('<td> </td>')
+                html+='<td> </td>'
             }
-        html.push('</tr>')
+        html+='</tr>'
         categories[record.Category].push(html)
 
     }
@@ -240,6 +232,7 @@ async function show_student_completion(){
     Object.values(categories).forEach((item) =>
     tag("inventory_panel").innerHTML += item.join('')
     )
+    tag("inventory_panel").innerHTML += html
 }
 
 function add_buttons(row,col){log(2,arguments,filename,add_buttons)
@@ -398,42 +391,62 @@ async function employee_list(){log(4,arguments,filename,employee_list)
 }
 
 async function show_requirement(user_req_ID){
-    //This doesn't work right now 
+    //Get the user_req with the specified user_req_ID
     const user_req = await server_request({
         mode: "get_user_req",
         UserReqID: user_req_ID,
     })
     console.log(user_req)
+    //Get the requirement that corresponds to the user_req
     const requirement = await server_request({
         mode: "get_requirements",
         ReqID: user_req.records[0].fields.ReqID,
     })
     console.log(requirement)
+    //Check if the requirement is complete, change the value of req_status accordingly
     let req_status = ""
     if(typeof user_req.records[0].fields.ObservedCompetency == "string"){
         date = new Date(user_req.records[0].fields.TimeCompleted)
         date = date.toLocaleString()
-        req_status = `Complete on ${date}`
+        req_status = `Completed on ${date}`
     } else{
         req_status= "Incomplete"
     }
+
+    //Get physicians to choose from
+    const physicians = await server_request({
+        mode: "get_users",
+        filter: "Role='Physician'"
+    })
+    console.log(physicians)
+    //Create the drop down menu
+    let dropdown = '<select id="select_physician">'
+    for(const physician of physicians.records){
+        dropdown += `<option value="${physician.fields.UVUID}">${physician.fields.FirstName} ${physician.fields.LastName}</option>`
+    }
+    dropdown+= '</select>'
+
+    //Create the html and put it in the canvas
     html = `
     <h1>Requirement Details</h1>
-    <h3>Category: ${requirement.records[0].fields.ReqCategory} </h3
+    <h3>Category: ${requirement.records[0].fields.ReqCategory} </h3>
     <h3>Description: </h3>
     <h3>${requirement.records[0].fields.ReqWriting}</h3>
     <h3> ${req_status}</h3>
-    <button onclick="request_signoff(${user_req_ID})">Request Signoff</Button>
+    <button  onclick="request_signoff(${user_req_ID})">Request Signoff</Button>
+    ${dropdown}
     `
     tag("canvas").innerHTML = html
 }
 
 async function request_signoff(user_req_ID){
-    console.log(user_req_ID)
+    //The parameters for this function are the user_req_ID that needs to be signed of on
     const response = await server_request({
         mode: "request_signoff",
         UserReqID: user_req_ID,
-        PreceptorID: 87654321
+        PreceptorID: parseInt(tag("select_physician").value)
     })
-    console.log(response)
+    if(response.status == "success"){
+        tag("canvas").innerHTML = "<h2>Signoff Request has been sent</h2>"
+    }
 }
