@@ -354,13 +354,6 @@ async function personal_data(params){log(3,arguments,filename,personal_data)
                     <input placeholder="Last Name" name="last_name" value="${response.data.fields.last_name || ""}"><br>
                     <input placeholder="Email Address" name="email" value="${response.data.fields.email || ""}"><br>
                     <input placeholder="Phone Number" name="phone" value="${response.data.fields.phone || ""}"><br>
-                    Other employes can see ...<br>
-                    <select name="visibility">
-                        <option value="show-all" ${response.data.fields.visibility==="show-all" ?"selected":""}>my phone and email</option>
-                        <option value="email-only" ${response.data.fields.visibility==="email-only" ?"selected":""}>my email address only</option>
-                        <option value="phone-only" ${response.data.fields.visibility==="phone-only" ?"selected":""}>my phone number only</option>
-                        <option value="hide-all" ${response.data.fields.visibility==="hide-all" ?"selected":""}>no contact details</option>
-                    </select><br><br>
                     <input type="hidden" name="mode" value="update_user_record">
                     <button id="submit_button" type="button" onclick="personal_data(form_data(this,true))">Update</button>
                 </form>   
@@ -431,9 +424,7 @@ async function create_account(params){log(3,arguments,filename,create_account)
                 <input type="hidden" name="email" value="${params.email}">
                 <button type="button" onclick="create_account(form_data(this,true))">Verify Account</button>
                 </form>   
-            `    
-                
-
+            `
             }else{
             tag("create-account-message").innerHTML="Account creation failed. " + response.message
             tag("create_account_button").innerHTML="Create Account"    
@@ -472,33 +463,10 @@ async function create_account(params){log(3,arguments,filename,create_account)
                 <input placeholder="Email Address" name="email"><br>
                 <input placeholder="Phone Number" name="phone"><br>
                 <input placeholder="Password" name="password" type="password"><br>
-                Store: <select name="store">
                 <option value="" selected></option>
-                `]
-
-                params = {mode:'get_store_list'}
-                response = await server_request(params)
-                if(response.status!=="success"){
-                    message({
-                        title:"Error",
-                        message:"Unable to get store list.",
-                        kind:"error",
-                        seconds:8
-                    })
-                }                
+                `]                
     
-
-                for(const [key,val] of Object.entries(response.store_list)){
-                        html.push(`<option value="${val}">${key}</option>`)
-                }
-            html.push(`</select><br><br>
-                    Other employees can see ...<br>
-                    <select name="visibility">
-                        <option value="show-all" selected>my phone and email</option>
-                        <option value="email-only">my email address only</option>
-                        <option value="phone-only">my phone number only</option>
-                        <option value="hide-all">no contact details</option>
-                    </select><br><br>
+            html.push(`
                     <input type="hidden" name="mode" value="create">
                     <input type="hidden" name="confirm" value="${location.href.split("?")[0]}">
                     <button id="create_account_button" type="button" onclick="create_account(form_data(this,true))">Create Account</button>
